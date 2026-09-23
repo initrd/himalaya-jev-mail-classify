@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  launchd agent for macOS. Install with:
+
+    cp contrib/launchd/com.example.mail-classify.plist ~/Library/LaunchAgents/
+    # edit the paths below first, then:
+    launchctl load ~/Library/LaunchAgents/com.example.mail-classify.plist
+
+  Check it:   launchctl list | grep mail-classify
+  Run now:    launchctl start com.example.mail-classify
+  Stop:       launchctl unload ~/Library/LaunchAgents/com.example.mail-classify.plist
+
+  macOS note: secrets live in the login Keychain, not GNOME Keyring. Either use
+  the `security` command as the secret backend:
+
+      [secret]
+      backend = "command"
+      command = ["security", "find-generic-password", "-s", "openrouter", "-w"]
+
+    or point the dotenv backend at a file outside any synced folder, since a
+    Keychain item needs an interactive prompt the first time it is read.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.example.mail-classify</string>
+
+    <!-- Rename the Label above and this file to match your own namespace. -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/REPLACE_ME/.local/bin/mail-classify</string>
+        <string>--apply</string>
+        <string>--quiet</string>
+    </array>
+
+    <!-- Hourly. StartInterval is seconds between runs. -->
+    <key>StartInterval</key>
+    <integer>3600</integer>
+
+    <!-- Also run once when the agent loads, so a fresh install does something. -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- launchd does not inherit your shell, so PATH is bare. himalaya and the
+         token broker must be found: add wherever they live. -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/Users/REPLACE_ME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/mail-classify.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/mail-classify.err</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>

@@ -1,0 +1,16 @@
+[Unit]
+Description=Run mail-classify periodically
+Documentation=https://github.com/initrd/mail-classify
+
+[Timer]
+# Wait for the machine to settle, then run hourly.
+OnBootSec=10min
+OnUnitActiveSec=1h
+# If the machine was off when a run was due, run once on next boot rather than
+# skipping it. Safe because the run is idempotent: Gmail is the queue, and a
+# `Classified`-style sentinel means nothing is ever processed twice.
+Persistent=true
+Unit=mail-classify.service
+
+[Install]
+WantedBy=timers.target

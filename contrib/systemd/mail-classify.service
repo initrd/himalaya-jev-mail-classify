@@ -1,0 +1,21 @@
+[Unit]
+Description=Label and prioritise Gmail threads with Jev
+Documentation=https://github.com/initrd/mail-classify
+# Needs the network for the Gmail API and OpenRouter. The token broker
+# (ortie/secret-tool) must also be unlockable in this session - if the run
+# fails with "no value for OPENROUTER_API_KEY", that is usually why.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# --apply is required: the default is a dry run.
+# --quiet keeps stdout empty so only warnings and errors reach the journal.
+ExecStart=%h/.local/bin/mail-classify --apply --quiet
+# Failures are reported to the journal and the unit goes to failed, which
+# `systemctl --user status` surfaces. A failed thread is retried next run:
+# it never received the sentinel label, so it stays in the worklist.
+TimeoutStartSec=30min
+
+[Install]
+WantedBy=default.target
