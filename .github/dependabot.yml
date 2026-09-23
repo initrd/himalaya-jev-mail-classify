@@ -1,0 +1,43 @@
+version: 2
+
+updates:
+  # Python dependencies declared in pyproject.toml plus the uv.lock resolution.
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps"
+    groups:
+      # One PR for the whole Python dependency set: it is two packages, so
+      # separate PRs would be pure noise.
+      python:
+        patterns: ["*"]
+
+  # Action pins in .github/workflows. Note this only covers `owner/repo@ref`
+  # references; Dependabot ignores locally-referenced actions.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # Hook revisions pinned in .pre-commit-config.yaml. Keeping these current
+  # matters here more than usual: detect-secrets and gitleaks are the secret
+  # scanners, so a stale version is a stale rule set.
+  - package-ecosystem: "pre-commit"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "hooks"
+    groups:
+      hooks:
+        patterns: ["*"]

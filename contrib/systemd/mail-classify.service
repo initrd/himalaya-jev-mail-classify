@@ -1,6 +1,6 @@
 [Unit]
 Description=Label and prioritise Gmail threads with Jev
-Documentation=https://github.com/initrd/mail-classify
+Documentation=https://github.com/initrd/himalaya-jev-mail-classify
 # Needs the network for the Gmail API and OpenRouter. The token broker
 # (ortie/secret-tool) must also be unlockable in this session - if the run
 # fails with "no value for OPENROUTER_API_KEY", that is usually why.

@@ -600,7 +600,7 @@ def check(cfg: dict, args: argparse.Namespace) -> int:
 
     def report(ok: bool, label: str, detail: str = "") -> None:
         nonlocal problems
-        mark = "ok  " if ok else "FAIL"
+        mark = "ok" if ok else "fail"
         if not ok:
             problems += 1
         out(f"  [{mark}] {label}{(' - ' + detail) if detail else ''}")

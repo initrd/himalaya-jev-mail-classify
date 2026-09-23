@@ -1,6 +1,6 @@
 [Unit]
 Description=Run mail-classify periodically
-Documentation=https://github.com/initrd/mail-classify
+Documentation=https://github.com/initrd/himalaya-jev-mail-classify
 
 [Timer]
 # Wait for the machine to settle, then run hourly.

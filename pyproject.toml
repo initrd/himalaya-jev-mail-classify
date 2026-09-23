@@ -28,8 +28,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/initrd/mail-classify"
-Issues = "https://github.com/initrd/mail-classify/issues"
+Homepage = "https://github.com/initrd/himalaya-jev-mail-classify"
+Issues = "https://github.com/initrd/himalaya-jev-mail-classify/issues"
 
 [project.scripts]
 mail-classify = "mail_classify:main"
