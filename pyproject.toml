@@ -22,7 +22,10 @@ classifiers = [
     "Topic :: Communications :: Email",
     "Topic :: Office/Business",
 ]
-dependencies = ["typesafe-sdk>=0.7.1"]
+dependencies = [
+    "typesafe-sdk>=0.7.1",
+    "tomli>=2.0; python_version < '3.11'",  # tomllib is stdlib only from 3.11
+]
 
 [project.urls]
 Homepage = "https://github.com/initrd/mail-classify"

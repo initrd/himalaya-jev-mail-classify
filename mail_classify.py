@@ -44,7 +44,10 @@ from collections import defaultdict
 from email import policy
 from pathlib import Path
 
-import tomllib
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.10 has no tomllib
+    import tomli as tomllib  # type: ignore[no-redef]
 
 __version__ = "0.1.0"
 
