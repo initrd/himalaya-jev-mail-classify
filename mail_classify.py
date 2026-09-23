@@ -80,6 +80,27 @@ class ConfigError(Exception):
 
 
 _QUIET = False
+_COLOR = False
+
+# Only the markers are coloured, never the surrounding text: the output has to
+# stay readable when piped into a pager or a log file.
+_CODES = {
+    "ok": "\033[32m",  # green
+    "fail": "\033[31m",  # red
+    "warn": "\033[33m",  # yellow
+    "reset": "\033[0m",
+}
+
+
+def colorize(text: str, kind: str) -> str:
+    """Wrap text in an ANSI colour when stdout is a terminal.
+
+    Honours NO_COLOR (https://no-color.org) and stays plain when output is
+    redirected, so a piped report never gains escape sequences.
+    """
+    if not _COLOR or not text:
+        return text
+    return f"{_CODES[kind]}{text}{_CODES['reset']}"
 
 
 def out(msg: str = "") -> None:
@@ -552,7 +573,7 @@ def run(cfg: dict, args: argparse.Namespace) -> int:
             log.debug("[%d/%d] %s -> review", i, len(threads), tid)
 
         gate_s = ("+" + "+".join(info["gates"])) if info["gates"] else ""
-        flag = " REVIEW" if review in labels else ""
+        flag = colorize(" REVIEW", "warn") if review in labels else ""
         out(
             f"  [{i}/{len(threads)}] {state['subject'][:48]:48s} "
             f"-> {info['filing']:10s} {info['priority']:5s} "
@@ -562,9 +583,10 @@ def run(cfg: dict, args: argparse.Namespace) -> int:
     elapsed = time.monotonic() - started
     log.debug("%d model calls in %.1fs", len(threads) - failures, elapsed)
 
+    fails = colorize(f"{failures} failed", "fail") if failures else "0 failed"
     out(
         f"\n{len(threads) - failures} classified, {len(buckets)} distinct label set(s), "
-        f"{failures} failed, ${total_cost:.4f}\n"
+        f"{fails}, ${total_cost:.4f}\n"
     )
     for target_set, members in buckets.items():
         out(f"  {len(members):4d}  {', '.join(sorted(target_set))}")
@@ -600,7 +622,7 @@ def check(cfg: dict, args: argparse.Namespace) -> int:
 
     def report(ok: bool, label: str, detail: str = "") -> None:
         nonlocal problems
-        mark = "ok" if ok else "fail"
+        mark = colorize("OK" if ok else "FAIL", "ok" if ok else "fail")
         if not ok:
             problems += 1
         out(f"  [{mark}] {label}{(' - ' + detail) if detail else ''}")
@@ -713,9 +735,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    global _QUIET
+    global _QUIET, _COLOR
     args = build_parser().parse_args(argv)
     _QUIET = args.quiet
+    # Colour only when a human is watching. NO_COLOR (any value) forces it off.
+    _COLOR = sys.stdout.isatty() and os.environ.get("NO_COLOR") is None
     setup_logging(args.log_level, args.log_file)
 
     if args.dry_run and args.apply:

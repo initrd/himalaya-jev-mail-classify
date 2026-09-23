@@ -1,6 +1,9 @@
-# mail-classify
+# himalaya-jev-mail-classify
 
 Label and prioritise Gmail with a language model, from the command line.
+
+It installs a **`mail-classify`** command — short to type. The repo name just
+says what it runs on: himalaya for the mail, Jev for the model.
 
 Reads mail through [himalaya](https://github.com/pimalaya/himalaya)'s Gmail
 backend, asks [Jev](https://docs.typesafe.ai) (TypeSafe's System One model, served
@@ -88,13 +91,17 @@ mail-classify --check
 ```
 
 ```
-  [ok  ] secret backend - dotenv ~/.config/mail-classify/.env
-  [ok  ] secret resolves
-  [ok  ] himalaya gmail backend - 35 labels visible
-  [ok  ] vocabulary labels exist
-  [ok  ] gmail api token (for label colours)
-  [ok  ] worklist query - 0 message(s) match 'in:inbox -label:a'
+  [OK] secret backend - dotenv ~/.config/mail-classify/.env
+  [OK] secret resolves
+  [OK] himalaya gmail backend - 35 labels visible
+  [OK] vocabulary labels exist
+  [OK] gmail api token (for label colours)
+  [OK] worklist query - 0 message(s) match 'in:inbox -label:a'
 ```
+
+`OK` is green and `FAIL` is red when stdout is a terminal, and plain text when
+piped or when `NO_COLOR` is set. The same applies to `REVIEW` in a dry run and to
+the failed count in the summary.
 
 ## Use
 

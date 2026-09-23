@@ -9,6 +9,8 @@ The live vocabulary check lives in test_vocabulary.py and needs a real key.
 
 from __future__ import annotations
 
+import contextlib
+import io
 import logging
 import os
 import pathlib
@@ -16,6 +18,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
@@ -395,6 +398,57 @@ class TestPlanLabels(unittest.TestCase):
             self.allowed,
         )
         self.assertNotIn("Extra", labels)
+
+
+class TestColorize(unittest.TestCase):
+    """Colour is opt-in on a TTY and must never leak into piped output."""
+
+    def tearDown(self):
+        mc._COLOR = False
+        mc._QUIET = False
+
+    def test_disabled_returns_plain_text(self):
+        mc._COLOR = False
+        self.assertEqual(mc.colorize("OK", "ok"), "OK")
+
+    def test_enabled_wraps_in_ansi(self):
+        mc._COLOR = True
+        self.assertEqual(mc.colorize("OK", "ok"), "\033[32mOK\033[0m")
+        self.assertEqual(mc.colorize("FAIL", "fail"), "\033[31mFAIL\033[0m")
+
+    def test_empty_string_is_untouched(self):
+        mc._COLOR = True
+        self.assertEqual(mc.colorize("", "ok"), "")
+
+    def test_every_kind_resets(self):
+        mc._COLOR = True
+        for kind in (k for k in mc._CODES if k != "reset"):
+            self.assertTrue(mc.colorize("x", kind).endswith("\033[0m"))
+
+    def test_check_markers_are_consistent_case_and_unpadded(self):
+        """Regression: the marker used to be `ok  `, padded to match `FAIL`.
+
+        Network and mailbox access are patched out so this stays an offline test.
+        """
+        cfg = base_config()
+        cfg["secret"] = {"backend": "env", "var": "DEFINITELY_NOT_SET_XYZ"}
+        os.environ.pop("DEFINITELY_NOT_SET_XYZ", None)
+        args = mc.build_parser().parse_args(["--check"])
+
+        buf = io.StringIO()
+        with (
+            mock.patch.object(mc, "label_map", return_value={"Dev": "Label_1"}),
+            mock.patch.object(mc, "worklist", return_value=[]),
+            contextlib.redirect_stdout(buf),
+        ):
+            mc.check(cfg, args)
+
+        text = buf.getvalue()
+        self.assertIn("[FAIL]", text)
+        # no padding inside the brackets, and no lowercase marker
+        self.assertNotIn("[ok", text)
+        self.assertNotIn("[FAIL ", text)
+        self.assertNotIn("[ FAIL", text)
 
 
 class TestCli(unittest.TestCase):
