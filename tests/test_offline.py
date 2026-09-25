@@ -69,6 +69,40 @@ def answers(filing="Dev", fconf=0.95, priority="P1", pconf=0.9, security=0.0):
 # ---------------------------------------------------------------------- tests
 
 
+class TestHimalayaAccount(unittest.TestCase):
+    def test_main_passes_selected_account_to_himalaya(self):
+        def probe(cfg, args):
+            mc.himalaya("gmail", "labels", "list")
+            return mc.EXIT_OK
+
+        with (
+            mock.patch.object(mc, "load_config", return_value={}),
+            mock.patch.object(mc, "validate_config"),
+            mock.patch.object(mc, "setup_logging"),
+            mock.patch.object(mc, "check", side_effect=probe),
+            mock.patch.object(
+                mc.subprocess, "run", return_value=mock.Mock(returncode=0, stdout="")
+            ) as run,
+        ):
+            self.assertEqual(mc.main(["--account", "work", "--check"]), mc.EXIT_OK)
+
+        self.assertEqual(
+            run.call_args.args[0],
+            ["himalaya", "--account", "work", "gmail", "labels", "list"],
+        )
+
+    def test_omitted_account_leaves_default_selection_to_himalaya(self):
+        with (
+            mock.patch.object(mc, "_HIMALAYA_ACCOUNT", None),
+            mock.patch.object(
+                mc.subprocess, "run", return_value=mock.Mock(returncode=0, stdout="")
+            ) as run,
+        ):
+            mc.himalaya("gmail", "labels", "list")
+
+        self.assertEqual(run.call_args.args[0], ["himalaya", "gmail", "labels", "list"])
+
+
 class TestDotenv(unittest.TestCase):
     def test_parses_quotes_exports_and_comments(self):
         with tempfile.NamedTemporaryFile("w", suffix=".env", delete=False) as f:

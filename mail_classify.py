@@ -81,6 +81,7 @@ class ConfigError(Exception):
 
 _QUIET = False
 _COLOR = False
+_HIMALAYA_ACCOUNT: str | None = None
 
 # Only the markers are coloured, never the surrounding text: the output has to
 # stay readable when piped into a pager or a log file.
@@ -238,9 +239,13 @@ def secret_source(cfg: dict) -> str:
 
 
 def himalaya(*args: str, check: bool = True) -> str:
-    log.debug("himalaya %s", " ".join(args))
+    command = ["himalaya"]
+    if _HIMALAYA_ACCOUNT is not None:
+        command.extend(("--account", _HIMALAYA_ACCOUNT))
+    command.extend(args)
+    log.debug("%s", " ".join(command))
     try:
-        r = subprocess.run(["himalaya", *args], capture_output=True, text=True)
+        r = subprocess.run(command, capture_output=True, text=True)
     except FileNotFoundError as e:
         raise ConfigError(
             "himalaya not found on PATH. Install it and configure the Gmail backend."
@@ -528,7 +533,15 @@ def run(cfg: dict, args: argparse.Namespace) -> int:
     threads = thread_targets(items)
 
     tag = "" if args.apply else " [DRY RUN]"
-    out(f"{len(threads)} thread(s) / {len(items)} message(s) via {query!r} -> {model}{tag}\n")
+    account = (
+        f"account {_HIMALAYA_ACCOUNT!r}"
+        if _HIMALAYA_ACCOUNT is not None
+        else "default account"
+    )
+    out(
+        f"{len(threads)} thread(s) / {len(items)} message(s) via {query!r} "
+        f"({account}) -> {model}{tag}\n"
+    )
     if not threads:
         return EXIT_OK
 
@@ -647,7 +660,16 @@ def check(cfg: dict, args: argparse.Namespace) -> int:
 
     try:
         have = label_map()
-        report(True, "himalaya gmail backend", f"{len(have)} labels visible")
+        account = (
+            f"account {_HIMALAYA_ACCOUNT!r}"
+            if _HIMALAYA_ACCOUNT is not None
+            else "default account"
+        )
+        report(
+            True,
+            "himalaya gmail backend",
+            f"{len(have)} labels visible ({account})",
+        )
         required = filing | prio | gates | {cl["sentinel_label"], cl["review_label"]}
         missing = sorted(required - set(have))
         report(
@@ -695,6 +717,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="config file (default: %(default)s)",
     )
     ap.add_argument(
+        "--account",
+        metavar="NAME",
+        help="Himalaya account to use (default: Himalaya's default)",
+    )
+    ap.add_argument(
         "-n",
         "--limit",
         type=int,
@@ -735,8 +762,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    global _QUIET, _COLOR
+    global _QUIET, _COLOR, _HIMALAYA_ACCOUNT
     args = build_parser().parse_args(argv)
+    _HIMALAYA_ACCOUNT = args.account
     _QUIET = args.quiet
     # Colour only when a human is watching. NO_COLOR (any value) forces it off.
     _COLOR = sys.stdout.isatty() and os.environ.get("NO_COLOR") is None

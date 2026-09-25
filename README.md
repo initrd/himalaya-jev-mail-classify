@@ -12,7 +12,7 @@ and applies the answers as Gmail labels and colours.
 
 ```
 $ mail-classify --limit 4
-4 thread(s) / 4 message(s) via 'in:inbox -label:a' -> jev-1.13 [DRY RUN]
+4 thread(s) / 4 message(s) via 'in:inbox -label:a' (default account) -> jev-1.13 [DRY RUN]
 
   [1/4] Updated invitation: Check-in @ Weekly from 10am  -> Calendar   P1   f=1.00 p=0.99
   [2/4] [GitHub] Your fine-grained personal access token -> Dev        P0   f=1.00 p=0.89+Security+NeedsAction
@@ -31,7 +31,7 @@ what a message *is about*, not who sent it.
 
 - **[himalaya](https://github.com/pimalaya/himalaya)** ≥ 2.0, configured with a
   **Gmail backend** (`gmail.auth.token.command`). Every id in this pipeline is a
-  Gmail API id, so an IMAP-only setup will not work.
+  Gmail API id, so every selected account needs a Gmail backend.
 - A way to get an OAuth token for that account. [ortie](https://github.com/pimalaya/ortie)
   is what the examples use; any command that prints a token on stdout will do.
 - An **[OpenRouter](https://openrouter.ai/settings/keys) API key**, which is what
@@ -93,7 +93,7 @@ mail-classify --check
 ```
   [OK] secret backend - dotenv ~/.config/mail-classify/.env
   [OK] secret resolves
-  [OK] himalaya gmail backend - 35 labels visible
+  [OK] himalaya gmail backend - 35 labels visible (default account)
   [OK] vocabulary labels exist
   [OK] gmail api token (for label colours)
   [OK] worklist query - 0 message(s) match 'in:inbox -label:a'
@@ -109,12 +109,18 @@ the failed count in the summary.
 mail-classify                     # dry run the inbox (the safe default)
 mail-classify --limit 25          # dry run 25 threads
 mail-classify --apply             # label them for real
+mail-classify --account work       # dry run against Himalaya account "work"
 mail-classify --query 'label:foo' # work on some other slice of mail
 mail-classify --log-level debug   # why is it doing that
 ```
 
 A dry run prints every decision, the resulting label sets and the exact cost.
 Nothing is written without `--apply`.
+
+`himalaya account list` shows available accounts. `--account NAME` selects one for
+all mail operations; without it, Himalaya's default account is used. If label
+colors are configured, `[gmail.token].command` must return a token for the same
+account.
 
 ## How it works
 
